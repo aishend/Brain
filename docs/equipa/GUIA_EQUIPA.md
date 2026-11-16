@@ -214,8 +214,8 @@ Nenhum processo fala diretamente com outro: tudo passa pelo Gateway. As caixas a
 | Camera | `src/hardware/camera/` | Captura dois streams (alta e baixa resolução), grava vídeo e aceita configurações (brilho, contraste) |
 | SerialHandler | `src/hardware/serialhandler/` | Envia comandos à Nucleo (`threadWrite`) e lê as respostas e os sensores (`threadRead`) |
 | Dashboard | `src/dashboard/` | Backend Python mais frontend Angular na porta 4200: condução manual, calibração, firmware, Wi-Fi, consola |
-| TrafficCommunication | `src/data/` (submódulo) | Cliente do servidor de localização e tráfego |
-| Semaphores | `src/data/` (submódulo) | Escuta o estado dos semáforos por UDP |
+| TrafficCommunication | `src/data/` (submódulo) | Cliente do servidor de localização e tráfego, por WebSocket |
+| Semaphores | `src/data/` (submódulo) | Retirado do Brain em outubro de 2026. Confirmar no fórum como vão funcionar os semáforos |
 
 **Como funcionam as mensagens:**
 
@@ -322,9 +322,9 @@ Na pista, o carro recebe a sua posição e o estado dos semáforos, e tem de env
 
 **Servidor de tráfego (TrafficCommunication):**
 
-1. O carro escuta na **porta UDP 9000** o anúncio do servidor e valida-o com a chave pública.
-2. Liga-se ao servidor por TCP e indica o ID do seu dispositivo de localização. Precisa da API key do LocSys em `TRAFFIC_DEVICE_TOKEN`, no ficheiro `.env`.
-3. A partir daí, o carro mete os dados na memória partilhada e uma tarefa periódica envia-os:
+1. **Desde outubro de 2026, o cliente usa WebSocket.** Liga-se a `wss://locsys.boschfuturemobility.com` (configurável em `TRAFFIC_WS_URL`). O cliente antigo, por UDP 9000 e TCP, foi retirado.
+2. A autenticação é feita com um token Bearer: a API key do LocSys em `TRAFFIC_DEVICE_TOKEN` (ou `DEVICE_TOKEN_<id>`), no ficheiro `.env`. O carro subscreve o ID do seu dispositivo de localização.
+3. A partir daí, o carro mete os dados na memória partilhada e o cliente envia-os. Cada envio leva um carimbo de tempo sincronizado com o servidor:
 
 ```python
 shared_memory.insert("deviceSpeed", [8.1])          # cm/s, a 1 Hz
@@ -349,9 +349,9 @@ O regulamento exige enviar a velocidade e a posição pelo menos de 3 em 3 segun
 
 **Semáforos:**
 
-- Cada semáforo transmite por UDP, na **porta 5007** e a 5 Hz, a sua posição e o estado: 0 = vermelho, 1 = amarelo, 2 = verde.
-- O ciclo é vermelho → verde → amarelo → vermelho.
-- Convinha juntar esta informação à deteção pela câmara, para o carro ser mais robusto.
+- Segundo a documentação, cada semáforo transmite por UDP, na porta 5007 e a 5 Hz, a sua posição e o estado: 0 = vermelho, 1 = amarelo, 2 = verde. O ciclo é vermelho → verde → amarelo → vermelho.
+- **Atenção:** em outubro de 2026, a Bosch retirou do código do Brain o cliente de semáforos. Temos de confirmar no fórum como é que os semáforos vão comunicar este ano.
+- Seja como for, o carro tem de detetar os semáforos pela câmara.
 
 **Para testar em casa**, o repo `Computer` tem `carsAndSemaphoresStreamSIM`, que simula os semáforos e os outros carros, e `trafficCommunicationServer`, que simula o servidor de tráfego.
 
