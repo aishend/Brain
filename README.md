@@ -1,5 +1,7 @@
 # BFMC - Brain Project
 
+> **Equipa:** começar pelo [Guia da Equipa](docs/equipa/GUIA_EQUIPA.md), com regras, calendário, arquitetura, setup e roadmap da BFMC 2027.
+
 The project contains all the provided code for the RPi, more precisely:
 - Firmware for communicating with the Nucleo and control the robot movements (Speed with constant current consumption, speed with constant speed, braking, moving and steering);
 - Firmware for gathering data from the sensors (IMU and Camera);
